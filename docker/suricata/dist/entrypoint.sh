@@ -63,7 +63,6 @@ fi
 myIF="$(ip route | grep "^default" | awk '{ print $5 }')"
 
 # Info
-echo "- Oinkcode: ${myOINKCODE}"
 echo "- Capture filter: ${SURICATA_CAPTURE_FILTER}"
 echo "- Interface: ${myIF}"
 
