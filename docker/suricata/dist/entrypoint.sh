@@ -1,4 +1,5 @@
 #!/bin/ash
+set -eo pipefail
 
 # Let's ensure normal operation on exit or if interrupted ...
 function fuCLEANUP {
@@ -7,7 +8,7 @@ function fuCLEANUP {
 trap fuCLEANUP EXIT
 
 ### Vars
-myOINKCODE="$1"
+myOINKCODE="${OINKCODE}"
 
 # Check internet availability 
 function fuCHECKINET () {
@@ -15,7 +16,7 @@ mySITES=$1
 error=0
 for i in $mySITES;
   do
-    curl --connect-timeout 5 -Is $i 2>&1 > /dev/null
+    curl --connect-timeout 5 -Is "$i" 2>&1 > /dev/null
       if [ $? -ne 0 ];
         then
 	  let error+=1
@@ -28,17 +29,17 @@ for i in $mySITES;
 myCHECK=$(fuCHECKINET "rules.emergingthreatspro.com rules.emergingthreats.net")
 if [ "$myCHECK" == "0" ];
   then
-    if [ "$myOINKCODE" != "" ] && [ "$myOINKCODE" != "OPEN" ];
+    if [ "${myOINKCODE}" != "" ] && [ "${myOINKCODE}" != "OPEN" ];
       then
-        suricata-update -q enable-source et/pro secret-code=$myOINKCODE > /dev/null
+        suricata-update -q enable-source et/pro secret-code="${myOINKCODE}"
       else
         # suricata-update uses et/open ruleset by default if not configured
         rm -f /var/lib/suricata/update/sources/et-pro.yaml 2>&1 > /dev/null
     fi
-    suricata-update -q --no-test --no-reload > /dev/null
-    echo "/etc/suricata/capture-filter.bpf"
+    suricata-update -q --no-test --no-reload
+    SURICATA_CAPTURE_FILTER="/etc/suricata/capture-filter.bpf"
   else
-    echo "/etc/suricata/null.bpf"
+    SURICATA_CAPTURE_FILTER="/etc/suricata/null.bpf"
 fi
 
 # Download rules via URL
@@ -57,3 +58,14 @@ if [ "$FROMURL" != "" ] ; then
     done
     IFS=$SAVEIFS
 fi
+
+# Determine IF
+myIF="$(ip route | grep "^default" | awk '{ print $5 }')"
+
+# Info
+echo "- Oinkcode: ${myOINKCODE}"
+echo "- Capture filter: ${SURICATA_CAPTURE_FILTER}"
+echo "- Interface: ${myIF}"
+
+# Run Suricata
+exec suricata -v -F "${SURICATA_CAPTURE_FILTER}" -i "${myIF}"

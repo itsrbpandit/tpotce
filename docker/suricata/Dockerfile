@@ -20,10 +20,10 @@ RUN apk --no-cache -U upgrade && \
     cp /root/dist/*.yaml /etc/suricata/ && \
     cp /root/dist/*.conf /etc/suricata/ && \
     cp /root/dist/*.bpf /etc/suricata/ && \
-    cp /root/dist/update.sh /usr/bin/ && \
+    cp /root/dist/entrypoint.sh /usr/bin/ && \
     chmod 644 /etc/suricata/*.config && \
     chmod 755 -R /var/lib/suricata && \
-    chmod 755 /usr/bin/update.sh && \
+    chmod 755 /usr/bin/entrypoint.sh && \
     chown -R root:suri /tmp /run && \
 #
 # Download the latest EmergingThreats OPEN ruleset
@@ -37,4 +37,4 @@ RUN apk --no-cache -U upgrade && \
 #
 # Start suricata
 STOPSIGNAL SIGINT
-CMD SURICATA_CAPTURE_FILTER=$(update.sh $OINKCODE) && exec suricata -v -F $SURICATA_CAPTURE_FILTER -i $(ip route | grep "^default" | awk '{ print $5 }')
+ENTRYPOINT ["entrypoint.sh"]
